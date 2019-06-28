@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using HealthChecks.Hangfire;
 using Magicodes.HealthChecks.Core.Checks;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -62,8 +63,14 @@ namespace Magicodes.HealthChecks.Core
                     }, tags: new string[] { "ping" });
 
                 //添加对I/O的监控检查
+                var tempPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Temp", "Downloads");
+                var logsPath = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "logs");
                 if (Convert.ToBoolean(configuration["HealthChecks-UI:Io:IsEnable"]))
-                    healthChecksService.AddCheck<IoHealthCheck>("io");
+                {
+                    healthChecksService.AddIo(tempPath, "temp");
+                    healthChecksService.AddIo(logsPath, "logs");
+                }
+                    
             }
             return services;
         }

@@ -12,32 +12,26 @@ namespace Magicodes.HealthChecks.Core.Checks
 {
     public class IoHealthCheck : IHealthCheck
     {
-        private readonly string _tempPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Temp", "Downloads");
-
-
-        public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        private readonly string _path;
+        public IoHealthCheck(string path)
         {
-            if (_tempPath!=null)
-            {
-                DirectoryInfo dir = new DirectoryInfo(_tempPath);
-                var fileAcl = dir.GetAccessControl();
-                var rules = fileAcl.GetAccessRules(true, true, typeof(System.Security.Principal.NTAccount)).OfType<FileSystemAccessRule>().ToList();
-                if (rules.Exists(a => a.FileSystemRights == FileSystemRights.CreateFiles
-                                      || a.FileSystemRights == FileSystemRights.WriteData
-                                      || a.FileSystemRights == FileSystemRights.ExecuteFile
-                                      || a.FileSystemRights == FileSystemRights.Traverse
-                                      || a.FileSystemRights == FileSystemRights.ReadAndExecute
-                                      || a.FileSystemRights == FileSystemRights.Write
-                                      || a.FileSystemRights == FileSystemRights.Modify))
-                {
-                    return Task.FromResult(HealthCheckResult.Healthy());
-                }
-                else
-                {
-                    return Task.FromResult(HealthCheckResult.Unhealthy("无写入权限"));
-                }
-            }
-            return Task.FromResult(HealthCheckResult.Unhealthy(description: "文件夹不存在！"));
+            _path = path;
+        }
+
+        public Task<HealthCheckResult> CheckHealthAsync( HealthCheckContext context, CancellationToken cancellationToken = default)
+        {
+            if (!Directory.Exists(_path)) return Task.FromResult(HealthCheckResult.Unhealthy(description: "文件夹不存在！"));
+            var dir = new DirectoryInfo(_path);
+            var fileAcl = dir.GetAccessControl();
+            var rules = fileAcl.GetAccessRules(true, true, typeof(System.Security.Principal.NTAccount)).OfType<FileSystemAccessRule>().ToList();
+            return Task.FromResult(rules.Exists(a => a.FileSystemRights == FileSystemRights.CreateFiles
+                                                     || a.FileSystemRights == FileSystemRights.WriteData
+                                                     || a.FileSystemRights == FileSystemRights.ExecuteFile
+                                                     || a.FileSystemRights == FileSystemRights.Traverse
+                                                     || a.FileSystemRights == FileSystemRights.ReadAndExecute
+                                                     || a.FileSystemRights == FileSystemRights.Write
+                                                     || a.FileSystemRights == FileSystemRights.Modify
+                                                     || a.FileSystemRights == FileSystemRights.FullControl) ? HealthCheckResult.Healthy() : HealthCheckResult.Unhealthy("无写入权限"));
         }
     }
 }
