@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Magicodes.HealthChecks;
+﻿using HealthChecks.UI.Client;
+using Magicodes.HealthChecks.Core;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Web.Test
 {
@@ -25,20 +21,22 @@ namespace Web.Test
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             //添加健康检查，支持通过配置文件配置
             services.AddHealthChecks(Configuration);
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            //app.UseHealthChecks("/health");
-            if (env.IsDevelopment())
+            
+            if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
+            app.UseHealthChecks("/healthz", new HealthCheckOptions
             {
-                app.UseDeveloperExceptionPage();
-            }
-
+                Predicate = _ => true,
+                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+            });
             app.UseMvc();
         }
     }
